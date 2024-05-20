@@ -1,0 +1,78 @@
+CREATE DATABASE Universidade;
+USE Universidade;
+
+CREATE TABLE Curso (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(50),
+    descricao TEXT
+);
+
+CREATE TABLE Aluno (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(50),
+    sobrenome VARCHAR(50),
+    email VARCHAR(100),
+    curso_id INT,
+    FOREIGN KEY (curso_id) REFERENCES Curso(id)
+);
+
+CREATE TABLE Professor (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(50),
+    sobrenome VARCHAR(50),
+    email VARCHAR(100)
+);
+DELIMITER //
+
+CREATE PROCEDURE InserirCurso (
+    IN p_nome VARCHAR(50),
+    IN p_descricao TEXT
+)
+BEGIN
+    INSERT INTO Curso (nome, descricao) VALUES (p_nome, p_descricao);
+END //
+
+DELIMITER ;
+DELIMITER //
+
+CREATE PROCEDURE SelecionarCursos ()
+BEGIN
+    SELECT * FROM Curso;
+END //
+
+DELIMITER ;
+DELIMITER //
+
+CREATE FUNCTION GerarEmailAluno (
+    p_nome VARCHAR(50),
+    p_sobrenome VARCHAR(50)
+) RETURNS VARCHAR(100)
+BEGIN
+    DECLARE email_base VARCHAR(100);
+    DECLARE email_gerado VARCHAR(100);
+    DECLARE cont INT DEFAULT 1;
+    
+    SET email_base = CONCAT(LOWER(p_nome), '.', LOWER(p_sobrenome), '@dominio.com');
+    SET email_gerado = email_base;
+
+    WHILE EXISTS (SELECT 1 FROM Aluno WHERE email = email_gerado) DO
+        SET cont = cont + 1;
+        SET email_gerado = CONCAT(LOWER(p_nome), '.', LOWER(p_sobrenome), cont, '@dominio.com');
+    END WHILE;
+    
+    RETURN email_gerado;
+END //
+
+DELIMITER ;
+DELIMITER //
+
+CREATE PROCEDURE InserirAluno (
+    IN p_nome VARCHAR(50),
+    IN p_sobrenome VARCHAR(50),
+    IN p_curso_id INT
+)
+BEGIN
+    DECLARE p_email VARCHAR(100);
+    SET p_email = GerarEmailAluno(p_nome, p_sobrenome);
+    INSERT INTO Aluno (nome, sobrenome, email, curso_id) VALUES (p_nome, p_sobrenome, p_email, p_curso_id);
+END //
